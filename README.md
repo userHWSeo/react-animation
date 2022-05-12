@@ -211,3 +211,188 @@ function App() {
   );
 }
 ```
+
+<br>
+<br>
+<br>
+<br>
+
+### 220512
+
+<br>
+Hover, Tap, Drag를 사용했다.
+<br>
+<br>
+Hover은 whileHover를 사용하여 호버 제스처가 인식되는 동안 애니메이션이 할 속성을 입력한다.
+<br>
+<br>
+Tap은 컴포넌트를 누르고 있는 동안 애니메이션이 할 속성을 입력한다.
+<br>
+<br>
+마지막으로 Drag는 요소의 끌기를 활성화 한다. whileDrag를 사용하여 드래그 제스처가 인식되는 동안 애니메이션할 속성 을 입력한다.
+<br>
+<br>
+
+```
+...
+
+// Variants를 만들어 사용한다.
+const boxVariants = {
+  hover: { scale: 1.5, rotateZ: 90 },
+  click: { scale: 1, borderRadius: "100px" },
+  drag: { backgroundColor: "rgb(46, 204, 113)", transition: { duration: 10 } },
+};
+
+function App() {
+  return (
+    <Wrapper>
+      <Box
+        drag
+        variants={boxVariants}
+        whileHover="hover"
+        whileDrag="drag"
+        whileTap="click"
+      />
+    </Wrapper>
+  );
+}
+
+```
+
+<br>
+<br>
+다음으론 Drag에 대해 깊게 들어가는데 DragConstraints와 DragSnapToOrigin, DragElastic이다.
+<br>
+DragConstraints는 허용된 드래그 기능에 영역을 적용한다.
+<br>
+두 가지 방법으로 사용이 가능하며 하나는 픽셀을 이용하는 것과 하나는 ref를 이용하는 것이다.
+
+```
+// 픽셀 이용
+< motion.div drag="x" dragConstraints={{ left: 0, right: 300 }}/ >
+
+
+function App() {
+  // ref이용
+  const biggerBoxRef = useRef<HTMLDivElement>(null);
+  return (
+    <Wrapper>
+      <BiggerBox ref={biggerBoxRef}>
+        <Box
+          drag
+          dragConstraints={biggerBoxRef}
+          variants={boxVariants}
+        />
+      </BiggerBox>
+    </Wrapper>
+  );
+}
+```
+
+<br>
+<br>
+DragSnapToOrigin은 드래그한 요소를 원점으로 애니메이션하는 기능이고
+<br>
+DragElastic은 잡아당기는 힘을 뜻한다. 숫자 크기에 따라 잡아당기는 힘의 크기가 달라진다.
+기본 값은 0.5이다
+
+```
+function App() {
+  const biggerBoxRef = useRef<HTMLDivElement>(null);
+  return (
+    <Wrapper>
+      <BiggerBox ref={biggerBoxRef}>
+        <Box
+          drag
+          dragSnapToOrigin
+          dragElastic={0.5}
+          dragConstraints={biggerBoxRef}
+          variants={boxVariants}
+          whileHover="hover"
+          whileTap="click"
+        />
+      </BiggerBox>
+    </Wrapper>
+  );
+}
+```
+
+<br>
+<br>
+다음으론 MotionValue를 배웠다.
+<br>
+MotionValue는 애니메이션 값의 상태와 속도를 추적한다. 모든 모션 컴포넌트는 내부적으로 MotionValue를 사용한다.
+<br>
+<br>
+재미있게도 여기서 사용하는 모션 라이브러리에선 set, get, onChange등의 함수를 제공하는데 이는 React State가 아니기 때문에 리렌더링이 일어나지 않는다.
+<br>
+<br>
+
+```
+// 아래와 같이 useEffect를 사용하여 drag할 때 x 값을 가져올 수 있다.
+function App() {
+  const x = useMotionValue(0);
+  useEffect(()=>{
+    x.onChange(()=> console.log(x.get()));
+  }, [x]);
+  return (
+    <Wrapper>
+      <Box style={{ x }} drag="x" dragSnapToOrigin />
+    </Wrapper>
+  );
+}
+```
+
+<br>
+위와 같이 MotionValue 값을 가져와 useTransform을 사용해 연결할 수 있다.
+<br>
+<br>
+useTransform은 한 값 범위에서 다른 값 범위로 매핑하여 다른 MotionValue의 output을 변환하는 MotionValue를 만든다.
+<br>
+
+```
+function App() {
+  const x = useMotionValue(0);
+
+  // MotionValue가 -800일 때 scale은 2, 800일 때 0.1로 변하게 한다.
+  const scale = useTransform(x, [-800, 0, 800], [2, 1, 0.1]);
+  return (
+    <Wrapper>
+      <Box style={{ x, scale }} drag="x" dragSnapToOrigin />
+    </Wrapper>
+  );
+}
+```
+
+<br>
+<br>
+마지막으로 useViewportScroll이 있는데 스크롤 될 때 업데이트 되는 MotionValue를 리턴해준다.
+<br>
+이걸 사용해서 스크롤 이동 시에 애니메이션 효과를 줄 수가 있다.
+<br>
+일반적인 Scroll은 px을 ScrollProgress는 %를 나타내어 사용한다.
+
+```
+function App() {
+  const x = useMotionValue(0);
+  const rotateZ = useTransform(x, [-800, 800], [-360, 360]);
+  const gradient = useTransform(
+    x,
+    [-800, 0, 800],
+    [
+      "linear-gradient(135deg, rgb(0, 210, 238), rgb(0, 83, 238))",
+      "linear-gradient(135deg, rgb(238, 0, 153), rgb(221, 0, 238))",
+      "linear-gradient(135deg, rgb(0, 238, 155), rgb(238, 178, 0))",
+    ]
+  );
+  const { scrollYProgress } = useViewportScroll();
+  // Y축 progress가 0일 때 scale은 1, 1일 때 scale은 5로 변화를 준다.
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 5]);
+  return (
+    <Wrapper style={{ background: gradient }}>
+      <Box style={{ x, rotateZ, scale }} drag="x" dragSnapToOrigin />
+    </Wrapper>
+  );
+}
+
+```
