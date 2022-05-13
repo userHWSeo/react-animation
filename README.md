@@ -396,3 +396,196 @@ function App() {
 }
 
 ```
+
+<br>
+<br>
+<br>
+<br>
+
+### 220512
+
+<br>
+오늘 배운 내용은 SVG 애니메이션이다.
+<br>
+svg 엘리멘트에 애니메이션 효과를 주는것이다.
+<br>
+강의에선 FontAwesome에서 Airbnb로고를 다운 받아 사용했다.
+<br>
+svg도 variants를 사용할 수 있고 start(initial)와 end(animate)를 사용하여 효과를 준다.
+<br>
+transition에 duration 시간을 설정해 애니메이션 효과를 주고
+<br>
+svg에 stroke(선)의 색상 및 두께도 설정이 가능하다.
+
+```
+const Svg = styled.svg`
+  width: 300px;
+  height: 300px;
+  path {
+    stroke: white;
+    stroke-width: 2;
+  }
+`;
+
+const svg = {
+  start: { pathLength: 0, fill: "rgba(255, 255, 255, 0)" },
+  end: {
+    fill: "rgba(255, 255, 255, 1)",
+    pathLength: 1,
+  },
+};
+
+function App() {
+  return (
+    <Wrapper>
+      <Svg
+        focusable="false"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 448 512"
+      >
+        <motion.path
+          variants={svg}
+          initial="start"
+          animate="end"
+          transition={{
+            default: { duration: 5 },
+            fill: { duration: 1, delay: 3 },
+          }}
+          d= ""
+        ></motion.path>
+      </Svg>
+    </Wrapper>
+  );
+}
+
+```
+
+<br>
+<br>
+
+다음으론 AnimatePresence 이다.
+<br>
+AnimatePresence를 사용하면 React 트리에서 컴포넌트가 제거될 때 제거되는 컴포넌트에 애니메이션 효과를 줄 수 있다.
+<br>
+또한 exit라는 속성도 있는데 이는 엘리멘트가 사라질 때의 애니메이션을 동작시켜준다.
+<br>
+
+```
+const boxVariants = {
+  initial: {
+    opacity: 0,
+    scale: 0,
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    rotateZ: 360,
+  },
+  leaving: {
+    opacity: 0,
+    scale: 0,
+    y: 50,
+  },
+};
+
+function App() {
+  // useState와 button 태그의 onClick을 만들었다.
+  const [showing, setShowing] = useState(false);
+  const toggleShowing = () => setShowing((prev) => !prev);
+  return (
+    <Wrapper>
+    // 버튼을 클릭하면 Box가 애니메이션과 함께 나오고 사라진다.
+      <button onClick={toggleShowing}>Click</button>
+      <AnimatePresence>
+        {showing ? (
+          <Box
+            variants={boxVariants}
+            initial="initial"
+            animate="visible"
+            exit="leaving"
+          />
+        ) : null}
+      </AnimatePresence>
+    </Wrapper>
+  );
+}
+```
+
+<br>
+<br>
+
+이후 위의 AnimatePresence를 이용하여 슬라이드를 만들었다.
+<br>
+
+```
+const box = {
+  entry: (isBack: boolean) => {
+    return {
+      x: isBack ? -500 : 500,
+      opacity: 0,
+      scale: 0,
+    };
+  },
+  center: (isBack: boolean) => {
+    return {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+      },
+    };
+  },
+  exits: (isBack: boolean) => {
+    return {
+      x: isBack ? 500 : -500,
+      opacity: 0,
+      scale: 0,
+      transition: {
+        duration: 0.5,
+      },
+    };
+  },
+};
+
+function App() {
+  // visible은 Box를 생성하기 위해 사용된다.
+  const [visible, setVisible] = useState(1);
+
+  // back은 next와 prev 버튼의 분리를 위해 사용된다.
+  const [back, setBack] = useState(false);
+
+  // next버튼은 슬라이드가 끝에서 버튼을 누르면 다시 처음으로 가도록 설정함
+  const nextPlease = () => {
+    setBack(false);
+    setVisible((prev) => (prev === 10 ? 1 : prev + 1));
+  };
+
+  // prev버튼은 슬라이드가 처음에서 버튼을 누르면 다시 끝으로 가도록 설정함
+  const prevPlease = () => {
+    setBack(true);
+    setVisible((prev) => (prev === 1 ? 10 : prev - 1));
+  };
+  return (
+    <Wrapper>
+      <AnimatePresence custom={back}>
+        <Box
+        // custom 속성을 활용
+          custom={back}
+          variants={box}
+          initial="entry"
+          animate="center"
+          exit="exits"
+          key={visible}
+        >
+          {visible}
+        </Box>
+      </AnimatePresence>
+      <button onClick={prevPlease}>prev</button>
+      <button onClick={nextPlease}>next</button>
+    </Wrapper>
+  );
+}
+```
+
+또한 exitBeforeEnter이라는 속성도 있는데 이걸 사용하면 AnimatePresence의 애니메이션이 하나씩 렌더링된다.

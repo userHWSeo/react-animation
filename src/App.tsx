@@ -1,13 +1,9 @@
 import styled from "styled-components";
-import {
-  motion,
-  useMotionValue,
-  useTransform,
-  useViewportScroll,
-} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 
 const Wrapper = styled(motion.div)`
-  height: 200vh;
+  height: 100vh;
   width: 100vw;
   display: flex;
   justify-content: center;
@@ -15,32 +11,76 @@ const Wrapper = styled(motion.div)`
 `;
 
 const Box = styled(motion.div)`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
   width: 200px;
   height: 200px;
   background-color: rgba(255, 255, 255, 1);
-  border-radius: 50px;
+  border-radius: 40px;
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.06);
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  position: absolute;
+  top: 200px;
 `;
 
+const box = {
+  entry: (isBack: boolean) => {
+    return {
+      x: isBack ? -500 : 500,
+      opacity: 0,
+      scale: 0,
+    };
+  },
+  center: (isBack: boolean) => {
+    return {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+      },
+    };
+  },
+  exits: (isBack: boolean) => {
+    return {
+      x: isBack ? 500 : -500,
+      opacity: 0,
+      scale: 0,
+      transition: {
+        duration: 0.5,
+      },
+    };
+  },
+};
+
 function App() {
-  const x = useMotionValue(0);
-  const rotateZ = useTransform(x, [-800, 800], [-360, 360]);
-  const gradient = useTransform(
-    x,
-    [-800, 0, 800],
-    [
-      "linear-gradient(135deg, rgb(0, 210, 238), rgb(0, 83, 238))",
-      "linear-gradient(135deg, rgb(238, 0, 153), rgb(221, 0, 238))",
-      "linear-gradient(135deg, rgb(0, 238, 155), rgb(238, 178, 0))",
-    ]
-  );
-  const { scrollYProgress } = useViewportScroll();
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 5]);
+  const [visible, setVisible] = useState(1);
+  const [back, setBack] = useState(false);
+  const nextPlease = () => {
+    setBack(false);
+    setVisible((prev) => (prev === 10 ? 1 : prev + 1));
+  };
+  const prevPlease = () => {
+    setBack(true);
+    setVisible((prev) => (prev === 1 ? 10 : prev - 1));
+  };
   return (
-    <Wrapper style={{ background: gradient }}>
-      <Box style={{ x, rotateZ, scale }} drag="x" dragSnapToOrigin />
+    <Wrapper>
+      <AnimatePresence custom={back}>
+        <Box
+          custom={back}
+          variants={box}
+          initial="entry"
+          animate="center"
+          exit="exits"
+          key={visible}
+        >
+          {visible}
+        </Box>
+      </AnimatePresence>
+      <button onClick={prevPlease}>prev</button>
+      <button onClick={nextPlease}>next</button>
     </Wrapper>
   );
 }
