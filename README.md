@@ -402,7 +402,7 @@ function App() {
 <br>
 <br>
 
-### 220512
+### 220513
 
 <br>
 오늘 배운 내용은 SVG 애니메이션이다.
@@ -589,3 +589,54 @@ function App() {
 ```
 
 또한 exitBeforeEnter이라는 속성도 있는데 이걸 사용하면 AnimatePresence의 애니메이션이 하나씩 렌더링된다.
+
+<br>
+<br>
+<br>
+<br>
+
+### 220516
+
+<br>
+애니메이션 섹션의 마지막으로 클릭 시 확대 혹은 단독으로 중앙 배치되는 애니메이션을 배웠다.
+<br>
+
+```
+function App() {
+  const [id, setId] = useState<null | string>(null);
+  return (
+    <Wrapper>
+      <Grid>
+
+        // 4개의 박스를 만들기 위해 배열로 4개의 각기 다른 박스를 만들었다.
+        {[1, 2, 3, 4].map((n) => (
+          <Box onClick={() => setId(n + "")} key={n} layoutId={n + ""} />
+        ))}
+      </Grid>
+      <AnimatePresence>
+        {id ? (
+          <Overlay
+
+            // 클릭 시 setId를 null로 만들어 중앙 배치된 Box를 다시 원상복구 시켜준다.
+            onClick={() => setId(null)}
+
+            // 중앙 배치될 때 주변 배경이 어두워지고 축소 될 땐 다시 밝아지도록 했다.
+            initial={{ backgroundColor: "rgba(0, 0, 0, 0)" }}
+            animate={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+            exit={{ backgroundColor: "rgba(0, 0, 0, 0)" }}
+          >
+          // 선택한 Box가 width 400, heigt 200의 사이즈로 중앙에 나오게 된다.
+            <Box layoutId={id} style={{ width: 400, height: 200 }} />
+          </Overlay>
+        ) : null}
+      </AnimatePresence>
+    </Wrapper>
+  );
+}
+```
+
+<br>
+<br>
+
+Animation 파트가 마무리 되었는데 개인적으로<br>
+Farmer Motion이라는 라이버러리는 자주 사용할 거 같다.
